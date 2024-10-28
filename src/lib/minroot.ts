@@ -1,46 +1,53 @@
-/**
- * Performs modular exponentiation (base^exponent mod modulus)
- */
-function modPow(base: bigint, exponent: bigint, modulus: bigint): bigint {
-  if (modulus === 1n) return 0n;
-  let result = 1n;
-  base = base % modulus;
-  while (exponent > 0n) {
-    if (exponent % 2n === 1n) {
-      result = (result * base) % modulus;
+import { Field } from 'o1js';
+
+// Modular Exponentiation
+
+function fieldModPow(base: Field, exponent: bigint): Field {
+  let result = Field(1);
+  let currentBase = base;
+  let exp = exponent;
+
+  while (exp > 0n) {
+    if (exp % 2n === 1n) {
+      result = result.mul(currentBase);
     }
-    base = (base * base) % modulus;
-    exponent = exponent / 2n;
+    currentBase = currentBase.mul(currentBase);
+    exp = exp / 2n;
   }
   return result;
 }
 
-/**
- * Calculates the expression equivalent to Rust's:
- * let five_inv = five.modpow(&(&p - &two), &p);
- * (&five_inv * (&p - &three)) % &p
- */
+// Fifth Root Exponent
 
-function calculateExpression(p: bigint): bigint {
+function calculateFifthRootExponent(): bigint {
+  const p = Field.ORDER;
+  const five = 5n;
   const two = 2n;
   const three = 3n;
-  const five = 5n;
-
-  // Calculate five_inv = 5^(p-2) mod p
-  const five_inv = modPow(five, p - two, p);
-
-  // Calculate final expression: (five_inv * (p - three)) % p
-  const result = (five_inv * (p - three)) % p;
-
-  return result;
+  const five_inv = fieldModPow(Field(five), p - two).toBigInt();
+  const exp = (five_inv * (p - three)) % p;
+  return exp;
 }
 
-// Example usage:
-const p = BigInt(
-  '21888242871839275222246405745257275088548364400416034343698204186575808495617'
-);
-const result = calculateExpression(p);
-console.log(result.toString());
+// Min Root Single
 
-// Export for module usage
-export { modPow, calculateExpression };
+function minRootIteration(x: Field, y: Field): [Field, Field] {
+  const fithRootExponent = calculateFifthRootExponent();
+  const sum = x.add(y);
+  const x_next = fieldModPow(sum, fithRootExponent);
+  const y_next = x;
+  return [x_next, y_next];
+}
+
+function minRoot(numIterations: number, x0: Field, y0: Field): [Field, Field] {
+  let x = x0;
+  let y = y0;
+
+  for (let i = 0; i < numIterations; i++) {
+    [x, y] = minRootIteration(x, y);
+  }
+
+  return [x, y];
+}
+
+export { minRoot, minRootIteration, fieldModPow, calculateFifthRootExponent };
