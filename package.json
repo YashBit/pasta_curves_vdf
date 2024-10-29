@@ -1,5 +1,5 @@
 {
-  "name": "pasta_curves_vdf",
+  "name": "minroot_o1js",
   "version": "1.0.0",
   "dependencies": {
     "zkapp-cli": "^0.22.0"
